@@ -14,6 +14,16 @@ struct Square {
     value: u32,
 }
 
+type State = Vec<Square>;
+
+enum Direction {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    NONE,
+}
+
 fn draw_board(canvas: &mut Canvas<Window>, color: Color) {
     canvas.set_draw_color(color);
     canvas.clear();
@@ -39,7 +49,7 @@ fn draw_board(canvas: &mut Canvas<Window>, color: Color) {
         .unwrap();
 }
 
-fn add_square(canvas: &mut Canvas<Window>, square: Square) {
+fn add_square(canvas: &mut Canvas<Window>, square: &Square) {
     let color = if square.value == 2 {
         Color::RGB(0, 0, 255)
     } else if square.value == 4 {
@@ -56,6 +66,43 @@ fn add_square(canvas: &mut Canvas<Window>, square: Square) {
     canvas.fill_rect(Rect::new(x, y, 200, 200)).unwrap();
 }
 
+fn up() -> State {
+    return vec![Square {
+        x: 0,
+        y: 0,
+        value: 2,
+    }];
+}
+fn right() -> State {
+    return vec![Square {
+        x: 3,
+        y: 0,
+        value: 4,
+    }];
+}
+fn down() -> State {
+    return vec![Square {
+        x: 3,
+        y: 3,
+        value: 8,
+    }];
+}
+
+fn left() -> State {
+    return vec![
+        Square {
+            x: 0,
+            y: 3,
+            value: 16,
+        },
+        Square {
+            x: 1,
+            y: 3,
+            value: 2,
+        },
+    ];
+}
+
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -67,34 +114,14 @@ pub fn main() {
         .unwrap();
 
     let mut canvas = &mut window.into_canvas().present_vsync().build().unwrap();
-    let mut i = 127;
-    let mut j = 0;
-    draw_board(canvas, Color::RGB(127, 127, i));
-    add_square(
-        &mut canvas,
-        Square {
-            x: j,
-            y: 0,
-            value: 2,
-        },
-    );
+    let mut state = vec![];
+    draw_board(canvas, Color::RGB(127, 127, 127));
     canvas.present();
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
-        // i = (i + 1) % 255;
-        // canvas.clear();
-        draw_board(canvas, Color::RGB(127, 127, i));
-        add_square(
-            &mut canvas,
-            Square {
-                x: j,
-                y: 0,
-                value: 2,
-            },
-        );
-        canvas.present();
+        let mut direction = Direction::NONE;
         for event in event_pump.poll_iter() {
-            match event {
+            direction = match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
                     keycode: Some(Keycode::Escape),
@@ -103,22 +130,35 @@ pub fn main() {
                 Event::KeyDown {
                     keycode: Some(Keycode::Up),
                     ..
-                } => i = (i + 1) % 255,
+                } => Direction::UP,
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
                     ..
-                } => i = (if i == 0 { 254 } else { i - 1 }) % 255,
+                } => Direction::DOWN,
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
                     ..
-                } => j = if j == 0 { 3 } else { j - 1 },
+                } => Direction::LEFT,
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
-                } => j = (j + 1) % 4,
-                _ => {}
+                } => Direction::RIGHT,
+                _ => Direction::NONE,
             }
         }
+        state = match direction {
+            Direction::UP => up(),
+            Direction::DOWN => down(),
+            Direction::LEFT => left(),
+            Direction::RIGHT => right(),
+            Direction::NONE => state,
+        };
+        draw_board(canvas, Color::RGB(127, 127, 127));
+        for square in state.iter() {
+            add_square(&mut canvas, square);
+        }
+
+        canvas.present();
         // The rest of the game loop goes here...
 
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
