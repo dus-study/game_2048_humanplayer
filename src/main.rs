@@ -6,7 +6,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
-use sdl2::Sdl;
+use sdl2::{EventPump, Sdl};
 use std::time::Duration;
 
 struct Square {
@@ -96,7 +96,47 @@ enum Direction {
     DOWN,
     LEFT,
     RIGHT,
+    ESCAPE,
     NONE,
+}
+
+trait Player {
+    fn get(&mut self) -> Direction;
+}
+
+type HumanPlayer = EventPump;
+
+impl Player for HumanPlayer {
+    fn get(&mut self) -> Direction {
+        let mut direction = Direction::NONE;
+        for event in self.poll_iter() {
+            direction = match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => Direction::ESCAPE,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => Direction::UP,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => Direction::DOWN,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => Direction::LEFT,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => Direction::RIGHT,
+                _ => Direction::NONE,
+            }
+        }
+        return direction;
+    }
 }
 
 fn up() -> State {
@@ -148,41 +188,14 @@ pub fn main() {
         800,
     );
     view.draw();
-    view.update(vec![]);
-    let mut event_pump = sdl_context.event_pump().unwrap();
-    'running: loop {
-        let mut direction = Direction::NONE;
-        for event in event_pump.poll_iter() {
-            direction = match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Up),
-                    ..
-                } => Direction::UP,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Down),
-                    ..
-                } => Direction::DOWN,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Left),
-                    ..
-                } => Direction::LEFT,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Right),
-                    ..
-                } => Direction::RIGHT,
-                _ => Direction::NONE,
-            }
-        }
-        match direction {
+    let mut player: HumanPlayer = sdl_context.event_pump().unwrap();
+    loop {
+        match player.get() {
             Direction::UP => view.update(up()),
             Direction::DOWN => view.update(down()),
             Direction::LEFT => view.update(left()),
             Direction::RIGHT => view.update(right()),
+            Direction::ESCAPE => break,
             Direction::NONE => {}
         };
 
