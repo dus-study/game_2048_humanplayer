@@ -6,6 +6,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
+use sdl2::Sdl;
 use std::time::Duration;
 
 struct Square {
@@ -16,54 +17,86 @@ struct Square {
 
 type State = Vec<Square>;
 
+struct View {
+    canvas: Canvas<Window>,
+    lines: Vec<(Point, Point)>,
+    bg_color: Color,
+    line_color: Color,
+    squares: Vec<Square>,
+}
+
+impl View {
+    fn new(
+        sdl_context: &Sdl,
+        bg_color: Color,
+        line_color: Color,
+        _game_size: u8,
+        window_size: u32,
+    ) -> View {
+        let video_subsystem = sdl_context.video().unwrap();
+
+        let window = video_subsystem
+            .window("rust-sdl2 demo", window_size, window_size)
+            .position_centered()
+            .build()
+            .unwrap();
+
+        let canvas = window.into_canvas().present_vsync().build().unwrap();
+        let mut lines: Vec<(Point, Point)> = vec![];
+        let window_size = window_size as i32;
+        lines.push((Point::new(0, 200), Point::new(window_size, 200)));
+        lines.push((Point::new(0, 400), Point::new(window_size, 400)));
+        lines.push((Point::new(0, 600), Point::new(window_size, 600)));
+        lines.push((Point::new(200, 0), Point::new(200, window_size)));
+        lines.push((Point::new(400, 0), Point::new(400, window_size)));
+        lines.push((Point::new(600, 0), Point::new(600, window_size)));
+
+        View {
+            canvas,
+            lines,
+            bg_color,
+            line_color,
+            squares: vec![],
+        }
+    }
+
+    fn draw(&mut self) {
+        self.canvas.set_draw_color(self.bg_color);
+        self.canvas.clear();
+        self.canvas.set_draw_color(self.line_color);
+        for line in self.lines.iter() {
+            self.canvas.draw_line(line.0, line.1).unwrap();
+        }
+        for square in self.squares.iter() {
+            let color = if square.value == 2 {
+                Color::RGB(0, 0, 255)
+            } else if square.value == 4 {
+                Color::RGB(255, 0, 0)
+            } else if square.value == 8 {
+                Color::RGB(0, 255, 0)
+            } else {
+                Color::RGB(255, 255, 255)
+            };
+            let x = square.x * 200;
+            let y = square.y * 200;
+
+            self.canvas.set_draw_color(color);
+            self.canvas.fill_rect(Rect::new(x, y, 200, 200)).unwrap();
+        }
+        self.canvas.present();
+    }
+
+    fn update(&mut self, squares: Vec<Square>) {
+        self.squares = squares;
+    }
+}
+
 enum Direction {
     UP,
     DOWN,
     LEFT,
     RIGHT,
     NONE,
-}
-
-fn draw_board(canvas: &mut Canvas<Window>, color: Color) {
-    canvas.set_draw_color(color);
-    canvas.clear();
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas
-        .draw_line(Point::new(0, 200), Point::new(800, 200))
-        .unwrap();
-    canvas
-        .draw_line(Point::new(0, 400), Point::new(800, 400))
-        .unwrap();
-    canvas
-        .draw_line(Point::new(0, 600), Point::new(800, 600))
-        .unwrap();
-
-    canvas
-        .draw_line(Point::new(200, 0), Point::new(200, 800))
-        .unwrap();
-    canvas
-        .draw_line(Point::new(400, 0), Point::new(400, 800))
-        .unwrap();
-    canvas
-        .draw_line(Point::new(600, 0), Point::new(600, 800))
-        .unwrap();
-}
-
-fn add_square(canvas: &mut Canvas<Window>, square: &Square) {
-    let color = if square.value == 2 {
-        Color::RGB(0, 0, 255)
-    } else if square.value == 4 {
-        Color::RGB(255, 0, 0)
-    } else if square.value == 8 {
-        Color::RGB(0, 255, 0)
-    } else {
-        Color::RGB(255, 255, 255)
-    };
-    let x = square.x * 200;
-    let y = square.y * 200;
-
-    canvas.set_draw_color(color);
-    canvas.fill_rect(Rect::new(x, y, 200, 200)).unwrap();
 }
 
 fn up() -> State {
@@ -73,6 +106,7 @@ fn up() -> State {
         value: 2,
     }];
 }
+
 fn right() -> State {
     return vec![Square {
         x: 3,
@@ -80,6 +114,7 @@ fn right() -> State {
         value: 4,
     }];
 }
+
 fn down() -> State {
     return vec![Square {
         x: 3,
@@ -105,18 +140,15 @@ fn left() -> State {
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-
-    let window = video_subsystem
-        .window("rust-sdl2 demo", 800, 800)
-        .position_centered()
-        .build()
-        .unwrap();
-
-    let mut canvas = &mut window.into_canvas().present_vsync().build().unwrap();
-    let mut state = vec![];
-    draw_board(canvas, Color::RGB(127, 127, 127));
-    canvas.present();
+    let mut view = View::new(
+        &sdl_context,
+        Color::RGB(127, 127, 127),
+        Color::RGB(0, 0, 0),
+        4,
+        800,
+    );
+    view.draw();
+    view.update(vec![]);
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
         let mut direction = Direction::NONE;
@@ -146,19 +178,16 @@ pub fn main() {
                 _ => Direction::NONE,
             }
         }
-        state = match direction {
-            Direction::UP => up(),
-            Direction::DOWN => down(),
-            Direction::LEFT => left(),
-            Direction::RIGHT => right(),
-            Direction::NONE => state,
+        match direction {
+            Direction::UP => view.update(up()),
+            Direction::DOWN => view.update(down()),
+            Direction::LEFT => view.update(left()),
+            Direction::RIGHT => view.update(right()),
+            Direction::NONE => {}
         };
-        draw_board(canvas, Color::RGB(127, 127, 127));
-        for square in state.iter() {
-            add_square(&mut canvas, square);
-        }
 
-        canvas.present();
+        view.draw();
+
         // The rest of the game loop goes here...
 
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
