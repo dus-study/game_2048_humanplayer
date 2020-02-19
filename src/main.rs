@@ -23,6 +23,7 @@ struct View {
     bg_color: Color,
     line_color: Color,
     squares: Vec<Square>,
+    // font:
 }
 
 impl View {
@@ -50,6 +51,9 @@ impl View {
         lines.push((Point::new(200, 0), Point::new(200, window_size)));
         lines.push((Point::new(400, 0), Point::new(400, window_size)));
         lines.push((Point::new(600, 0), Point::new(600, window_size)));
+
+        // let ttf_context = sdl2::ttf::init().unwrap();
+        // let font = ttf_context.load_font("fonts/DejaVuSansMono-Bold.ttf", 128).unwrap();
 
         View {
             canvas,
@@ -82,6 +86,7 @@ impl View {
 
             self.canvas.set_draw_color(color);
             self.canvas.fill_rect(Rect::new(x, y, 200, 200)).unwrap();
+            // let surface = font.render(square.value as str).unwrap();
         }
         self.canvas.present();
     }
