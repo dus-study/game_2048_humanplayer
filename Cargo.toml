@@ -10,3 +10,7 @@ edition = "2018"
 version = "0.33.0"
 default_features = true
 # features = ["ttf"]
+
+[dependencies.game_2048_view]
+# git = "https://github.com/dus-study/game_2048_view.git"
+path = "../game_2048_view"
