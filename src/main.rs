@@ -1,7 +1,10 @@
+extern crate game_2048_model;
 extern crate game_2048_view;
 extern crate sdl2;
 
+use game_2048_model::models::ArrayModel;
 use game_2048_view::{Square, View};
+use rand::thread_rng;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -58,46 +61,34 @@ impl Player for HumanPlayer {
     }
 }
 
-fn up() -> State {
-    return vec![Square {
-        x: 0,
-        y: 0,
-        value: 2,
-    }];
-}
-
-fn right() -> State {
-    return vec![Square {
-        x: 3,
-        y: 0,
-        value: 4,
-    }];
-}
-
-fn down() -> State {
-    return vec![Square {
-        x: 3,
-        y: 3,
-        value: 8,
-    }];
-}
-
-fn left() -> State {
-    return vec![
-        Square {
-            x: 0,
-            y: 3,
-            value: 16,
-        },
-        Square {
-            x: 1,
-            y: 3,
-            value: 2,
-        },
-    ];
+fn array_model_to_state(game: &ArrayModel) -> State {
+    let mut state: State = vec![];
+    let mut x = 0;
+    let mut y = 0;
+    let array = game.to_array();
+    for value in array.iter() {
+        if *value != 0 {
+            state.push(Square {
+                x,
+                y,
+                value: *value as u32,
+            });
+        }
+        x += 1;
+        if x >= 4 {
+            x = 0;
+            y += 1;
+        }
+    }
+    state
 }
 
 pub fn main() {
+    let mut game = ArrayModel::new();
+    let mut rng = thread_rng();
+    game.add_to_random_empty(&mut rng);
+    game.add_to_random_empty(&mut rng);
+
     let sdl_context = sdl2::init().unwrap();
     let mut view = View::new(
         &sdl_context,
@@ -110,17 +101,30 @@ pub fn main() {
     let mut player: HumanPlayer = sdl_context.event_pump().unwrap();
     loop {
         match player.get() {
-            Direction::UP => view.update(up()),
-            Direction::DOWN => view.update(down()),
-            Direction::LEFT => view.update(left()),
-            Direction::RIGHT => view.update(right()),
+            Direction::UP => {
+                game.move_up();
+                game.add_to_random_empty(&mut rng);
+                view.update(array_model_to_state(&game));
+            }
+            Direction::DOWN => {
+                game.move_down();
+                game.add_to_random_empty(&mut rng);
+                view.update(array_model_to_state(&game));
+            }
+            Direction::LEFT => {
+                game.move_left();
+                game.add_to_random_empty(&mut rng);
+                view.update(array_model_to_state(&game));
+            }
+            Direction::RIGHT => {
+                game.move_right();
+                game.add_to_random_empty(&mut rng);
+                view.update(array_model_to_state(&game));
+            }
             Direction::ESCAPE => break,
             Direction::NONE => {}
         };
-
         view.draw();
-
-        // The rest of the game loop goes here...
 
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
