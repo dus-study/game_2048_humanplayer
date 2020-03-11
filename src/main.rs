@@ -2,7 +2,7 @@ extern crate game_2048_model;
 extern crate game_2048_view;
 extern crate sdl2;
 
-use game_2048_model::models::ArrayModel;
+use game_2048_model::models::{ArrayModel, Directions, Model};
 use game_2048_view::{Square, View};
 use rand::thread_rng;
 use sdl2::event::Event;
@@ -65,7 +65,7 @@ fn array_model_to_state(game: &ArrayModel) -> State {
     let mut state: State = vec![];
     let mut x = 0;
     let mut y = 0;
-    let array = game.to_array();
+    let array = game.as_array();
     for value in array.iter() {
         if *value != 0 {
             state.push(Square {
@@ -86,8 +86,8 @@ fn array_model_to_state(game: &ArrayModel) -> State {
 pub fn main() {
     let mut game = ArrayModel::new();
     let mut rng = thread_rng();
-    game.add_to_random_empty(&mut rng);
-    game.add_to_random_empty(&mut rng);
+    game.random(&mut rng);
+    game.random(&mut rng);
 
     let sdl_context = sdl2::init().unwrap();
     let mut view = View::new(
@@ -102,23 +102,23 @@ pub fn main() {
     loop {
         match player.get() {
             Direction::UP => {
-                game.move_up();
-                game.add_to_random_empty(&mut rng);
+                game.slide(Directions::Up);
+                game.random(&mut rng);
                 view.update(array_model_to_state(&game));
             }
             Direction::DOWN => {
-                game.move_down();
-                game.add_to_random_empty(&mut rng);
+                game.slide(Directions::Down);
+                game.random(&mut rng);
                 view.update(array_model_to_state(&game));
             }
             Direction::LEFT => {
-                game.move_left();
-                game.add_to_random_empty(&mut rng);
+                game.slide(Directions::Left);
+                game.random(&mut rng);
                 view.update(array_model_to_state(&game));
             }
             Direction::RIGHT => {
-                game.move_right();
-                game.add_to_random_empty(&mut rng);
+                game.slide(Directions::Right);
+                game.random(&mut rng);
                 view.update(array_model_to_state(&game));
             }
             Direction::ESCAPE => break,
