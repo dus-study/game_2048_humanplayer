@@ -86,8 +86,8 @@ fn array_model_to_state(game: &ArrayModel) -> State {
 pub fn main() {
     let mut game = ArrayModel::new();
     let mut rng = thread_rng();
-    game.random(&mut rng);
-    game.random(&mut rng);
+    game.random(&mut rng).unwrap();
+    game.random(&mut rng).unwrap();
 
     let sdl_context = sdl2::init().unwrap();
     let mut view = View::new(
@@ -103,22 +103,22 @@ pub fn main() {
         match player.get() {
             Direction::UP => {
                 game.slide(Directions::Up);
-                game.random(&mut rng);
+                game.random(&mut rng).unwrap();
                 view.update(array_model_to_state(&game));
             }
             Direction::DOWN => {
                 game.slide(Directions::Down);
-                game.random(&mut rng);
+                game.random(&mut rng).unwrap();
                 view.update(array_model_to_state(&game));
             }
             Direction::LEFT => {
                 game.slide(Directions::Left);
-                game.random(&mut rng);
+                game.random(&mut rng).unwrap();
                 view.update(array_model_to_state(&game));
             }
             Direction::RIGHT => {
                 game.slide(Directions::Right);
-                game.random(&mut rng);
+                game.random(&mut rng).unwrap();
                 view.update(array_model_to_state(&game));
             }
             Direction::ESCAPE => break,
