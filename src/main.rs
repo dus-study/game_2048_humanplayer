@@ -95,6 +95,7 @@ pub fn main() {
         800,
     );
     view.draw();
+    view.update(array_model_to_state(&game));
     let mut player: HumanPlayer = sdl_context.event_pump().unwrap();
     loop {
         match player.get() {
