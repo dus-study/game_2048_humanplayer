@@ -14,10 +14,7 @@ use std::time::Duration;
 type State = Vec<Square>;
 
 enum Direction {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
+    Base(Directions),
     ESCAPE,
     NONE,
 }
@@ -41,19 +38,19 @@ impl Player for HumanPlayer {
                 Event::KeyDown {
                     keycode: Some(Keycode::Up),
                     ..
-                } => Direction::UP,
+                } => Direction::Base(Directions::Up),
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
                     ..
-                } => Direction::DOWN,
+                } => Direction::Base(Directions::Down),
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
                     ..
-                } => Direction::LEFT,
+                } => Direction::Base(Directions::Left),
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
-                } => Direction::RIGHT,
+                } => Direction::Base(Directions::Right),
                 _ => Direction::NONE,
             }
         }
@@ -101,24 +98,15 @@ pub fn main() {
     let mut player: HumanPlayer = sdl_context.event_pump().unwrap();
     loop {
         match player.get() {
-            Direction::UP => {
-                game.slide(Directions::Up);
-                game.random(&mut rng);
-                view.update(array_model_to_state(&game));
-            }
-            Direction::DOWN => {
-                game.slide(Directions::Down);
-                game.random(&mut rng);
-                view.update(array_model_to_state(&game));
-            }
-            Direction::LEFT => {
-                game.slide(Directions::Left);
-                game.random(&mut rng);
-                view.update(array_model_to_state(&game));
-            }
-            Direction::RIGHT => {
-                game.slide(Directions::Right);
-                game.random(&mut rng);
+            Direction::Base(dir) => {
+                game.slide(dir);
+                match game.random(&mut rng) {
+                    Err(err) => {
+                        println!("Game Over: {}", err);
+                        break;
+                    }
+                    Ok(_) => (),
+                };
                 view.update(array_model_to_state(&game));
             }
             Direction::ESCAPE => break,
