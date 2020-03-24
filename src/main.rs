@@ -83,8 +83,8 @@ fn array_model_to_state(game: &ArrayModel) -> State {
 pub fn main() {
     let mut game = ArrayModel::new();
     let mut rng = thread_rng();
-    game.random(&mut rng);
-    game.random(&mut rng);
+    game.random(&mut rng).unwrap();
+    game.random(&mut rng).unwrap();
 
     let sdl_context = sdl2::init().unwrap();
     let mut view = View::new(
