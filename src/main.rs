@@ -94,7 +94,11 @@ pub fn main() {
         4,
         800,
     );
+
+    // draw the initial state and upate the canvas
     view.draw();
+    view.update(array_model_to_state(&game));
+
     let mut player: HumanPlayer = sdl_context.event_pump().unwrap();
     loop {
         match player.get() {
