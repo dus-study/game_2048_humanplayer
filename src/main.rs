@@ -99,15 +99,16 @@ pub fn main() {
     loop {
         match player.get() {
             Direction::Base(dir) => {
-                game.slide(dir);
-                match game.random(&mut rng) {
-                    Err(err) => {
-                        println!("Game Over: {}", err);
-                        break;
-                    }
-                    Ok(_) => (),
-                };
-                view.update(array_model_to_state(&game));
+                if game.slide(dir).is_some() {
+                    match game.random(&mut rng) {
+                        Err(err) => {
+                            println!("Game Over: {}", err);
+                            break;
+                        }
+                        Ok(_) => (),
+                    };
+                    view.update(array_model_to_state(&game));
+                }
             }
             Direction::ESCAPE => break,
             Direction::NONE => {}
